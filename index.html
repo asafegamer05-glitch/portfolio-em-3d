@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfólio 3D | asafgamery - Luminexo Studios</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background: #0a0a16;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .ui-content {
+            pointer-events: all;
+        }
+
+        /* Header com nome 3D */
+        .header-3d {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 100;
+        }
+
+        .main-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #00eeff, #ff00cc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 30px rgba(0, 238, 255, 0.7);
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #b0b0ff;
+            opacity: 0.9;
+        }
+
+        /* Planet Cards */
+        .planet-info {
+            position: absolute;
+            background: rgba(10, 10, 22, 0.85);
+            border: 2px solid #00eeff;
+            border-radius: 15px;
+            padding: 25px;
+            width: 350px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 40px rgba(0, 238, 255, 0.3);
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: all;
+        }
+
+        .planet-info.show {
+            opacity: 1;
+        }
+
+        .planet-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            color: #00eeff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .planet-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Controls */
+        .controls-panel {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            background: rgba(10, 10, 22, 0.8);
+            border: 1px solid rgba(0, 238, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            color: #b0b0ff;
+        }
+
+        .key {
+            background: rgba(0, 238, 255, 0.2);
+            border: 1px solid #00eeff;
+            border-radius: 5px;
+            padding: 5px 10px;
+            min-width: 30px;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a16;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 1s;
+        }
+
+        .loading-logo {
+            font-size: 5rem;
+            color: #00eeff;
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+
+        .loading-bar {
+            width: 300px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00eeff, #ff00cc);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Menu Lateral */
+        .side-menu {
+            position: fixed;
+            right: -300px;
+            top: 0;
+            width: 300px;
+            height: 100%;
+            background: rgba(10, 10, 22, 0.95);
+            border-left: 2px solid #00eeff;
+            padding: 30px;
+            z-index: 3;
+            transition: right 0.5s;
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+
+        .side-menu.open {
+            right: 0;
+        }
+
+        .menu-toggle {
+            position: fixed;
+            right: 30px;
+            top: 30px;
+            background: rgba(0, 238, 255, 0.2);
+            border: 2px solid #00eeff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 4;
+            transition: all 0.3s;
+        }
+
+        .menu-toggle:hover {
+            background: rgba(0, 238, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .menu-icon {
+            font-size: 1.5rem;
+            color: #00eeff;
+        }
+
+        .menu-section {
+            margin-bottom: 30px;
+        }
+
+        .menu-title {
+            font-family: 'Orbitron', sans-serif;
+            color: #00eeff;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .project-card {
+            background: rgba(0, 238, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(0, 238, 255, 0.2);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .project-card:hover {
+            transform: translateX(-5px);
+            border-color: #00eeff;
+            background: rgba(0, 238, 255, 0.2);
+        }
+
+        .project-card h4 {
+            color: #00eeff;
+            margin-bottom: 8px;
+        }
+
+        .project-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .tag {
+            background: rgba(255, 0, 204, 0.2);
+            color: #ff00cc;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+
+        /* Social Links */
+        .social-links-3d {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-icon-3d {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .social-icon-3d.discord {
+            background: #5865F2;
+        }
+
+        .social-icon-3d.instagram {
+            background: linear-gradient(45deg, #405DE6, #833AB4, #C13584, #E1306C);
+        }
+
+        .social-icon-3d:hover {
+            transform: scale(1.1) translateY(-3px);
+        }
+
+        /* Animações */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2.5rem;
+            }
+            
+            .planet-info {
+                width: 280px;
+                padding: 20px;
+            }
+            
+            .controls-panel {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Tela de Carregamento -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo">
+            <i class="fas fa-gamepad"></i>
+        </div>
+        <h2 style="color: #00eeff; margin-bottom: 10px;">CARREGANDO UNIVERSO 3D</h2>
+        <p style="color: #b0b0ff; margin-bottom: 20px;">asafgamery | Luminexo Studios</p>
+        <div class="loading-bar">
+            <div class="loading-progress" id="loadingProgress"></div>
+        </div>
+        <p id="loadingText" style="color: #b0b0ff; margin-top: 10px;">Inicializando sistema...</p>
+    </div>
+
+    <!-- Container do Canvas 3D -->
+    <div id="canvas-container"></div>
+
+    <!-- Overlay da UI -->
+    <div class="ui-overlay">
+        <!-- Header com nome -->
+        <div class="header-3d">
+            <h1 class="main-title">asafgamery</h1>
+            <p class="subtitle">DESENVOLVEDOR 3D | LUMINEXO STUDIOS</p>
+        </div>
+
+        <!-- Informações dos Planetas (invisíveis por padrão) -->
+        <div class="planet-info" id="planetRoblox" style="top: 150px; left: 50px;">
+            <h3 class="planet-title">
+                <i class="fas fa-cube planet-icon"></i> ROBLOX DEVELOPMENT
+            </h3>
+            <p>Desenvolvimento de jogos completos no Roblox com sistemas avançados de Lua, economia, multiplayer e customização.</p>
+            <div class="project-tags" style="margin-top: 15px;">
+                <span class="tag">Lua</span>
+                <span class="tag">Roblox Studio</span>
+                <span class="tag">Game Design</span>
+                <span class="tag">Multiplayer</span>
+            </div>
+            <p style="margin-top: 15px; color: #00eeff; font-size: 0.9rem;">
+                <i class="fas fa-crown"></i> Luminexo Studios
+            </p>
+        </div>
+
+        <div class="planet-info" id="planetDiscord" style="top: 150px; right: 50px;">
+            <h3 class="planet-title">
+                <i class="fas fa-robot planet-icon"></i> DISCORD BOTS
+            </h3>
+            <p>Criação de bots avançados para Discord com aoi.js e discord.js. Sistemas de moderação, economia, música, tickets e automação.</p>
+            <div class="project-tags" style="margin-top: 15px;">
+                <span class="tag">aoi.js</span>
+                <span class="tag">discord.js</span>
+                <span class="tag">JavaScript</span>
+                <span class="tag">Node.js</span>
+            </div>
+        </div>
+
+        <div class="planet-info" id="planetLuminexo" style="bottom: 150px; left: 50%; transform: translateX(-50%);">
+            <h3 class="planet-title">
+                <i class="fas fa-gamepad planet-icon"></i> LUMINEXO STUDIOS
+            </h3>
+            <p>Estúdio de desenvolvimento fundado e liderado por asafgamery. Focado em criar experiências de jogo inovadoras e tecnologias criativas.</p>
+            <div class="project-tags" style="margin-top: 15px;">
+                <span class="tag">Desenvolvimento</span>
+                <span class="tag">Inovação</span>
+                <span class="tag">Criatividade</span>
+                <span class="tag">Tecnologia</span>
+            </div>
+            <div class="social-links-3d" style="margin-top: 15px;">
+                <a href="https://discord.com/users/1257311678891163722" target="_blank" class="social-icon-3d discord">
+                    <i class="fab fa-discord"></i>
+                </a>
+                <a href="https://instagram.com/asafgamery" target="_blank" class="social-icon-3d instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Controles -->
+        <div class="controls-panel">
+            <h4 style="color: #00eeff; margin-bottom: 15px;">CONTROLES</h4>
+            <div class="control-item">
+                <span class="key">WASD</span>
+                <span>Mover pela cena</span>
+            </div>
+            <div class="control-item">
+                <span class="key">MOUSE</span>
+                <span>Olhar ao redor</span>
+            </div>
+            <div class="control-item">
+                <span class="key">CLICK</span>
+                <span>Interagir com planetas</span>
+            </div>
+            <div class="control-item">
+                <span class="key">R</span>
+                <span>Resetar câmera</span>
+            </div>
+        </div>
+
+        <!-- Botão do Menu -->
+        <div class="menu-toggle" id="menuToggle">
+            <i class="fas fa-bars menu-icon"></i>
+        </div>
+    </div>
+
+    <!-- Menu Lateral -->
+    <div class="side-menu" id="sideMenu">
+        <div class="menu-section">
+            <h3 class="menu-title">PROJETOS DESTAQUE</h3>
+            
+            <div class="project-card" onclick="flyToPlanet('roblox')">
+                <h4>Jogo Roblox - Luminexo Adventures</h4>
+                <p>Aventura e exploração com sistema de progressão completo</p>
+                <div class="project-tags">
+                    <span class="tag">Roblox</span>
+                    <span class="tag">Lua</span>
+                    <span class="tag">Multiplayer</span>
+                </div>
+            </div>
+            
+            <div class="project-card" onclick="flyToPlanet('discord')">
+                <h4>Bot Discord Multifuncional</h4>
+                <p>Sistema completo com moderação, economia e música</p>
+                <div class="project-tags">
+                    <span class="tag">aoi.js</span>
+                    <span class="tag">discord.js</span>
+                    <span class="tag">Node.js</span>
+                </div>
+            </div>
+            
+            <div class="project-card" onclick="showStudioInfo()">
+                <h4>Luminexo Studios Platform</h4>
+                <p>Plataforma de desenvolvimento de jogos e tecnologias</p>
+                <div class="project-tags">
+                    <span class="tag">Estúdio</span>
+                    <span class="tag">Inovação</span>
+                    <span class="tag">Tecnologia</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <h3 class="menu-title">HABILIDADES</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <span class="tag">Roblox Dev</span>
+                <span class="tag">Lua Scripting</span>
+                <span class="tag">aoi.js</span>
+                <span class="tag">discord.js</span>
+                <span class="tag">JavaScript</span>
+                <span class="tag">Python</span>
+                <span class="tag">HTML/CSS</span>
+                <span class="tag">Game Design</span>
+                <span class="tag">3D Modeling</span>
+                <span class="tag">Video Editing</span>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <h3 class="menu-title">CONTATO</h3>
+            <p style="color: #b0b0ff; margin-bottom: 15px;">Entre em contato para projetos!</p>
+            <div class="social-links-3d">
+                <a href="https://discord.com/users/1257311678891163722" target="_blank" class="social-icon-3d discord">
+                    <i class="fab fa-discord"></i>
+                </a>
+                <a href="https://instagram.com/asafgamery" target="_blank" class="social-icon-3d instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+            <p style="margin-top: 15px; color: #b0b0ff; font-size: 0.9rem;">
+                Discord ID: 1257311678891163722<br>
+                Instagram: @asafgamery
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais
+        let scene, camera, renderer, controls;
+        let planets = {};
+        let raycaster, mouse;
+        let activePlanet = null;
+        let keys = {};
+        let cameraSpeed = 0.1;
+
+        // Elementos da UI
+        const loadingScreen = document.getElementById('loadingScreen');
+        const loadingProgress = document.getElementById('loadingProgress');
+        const loadingText = document.getElementById('loadingText');
+        const menuToggle = document.getElementById('menuToggle');
+        const sideMenu = document.getElementById('sideMenu');
+
+        // Sistema de carregamento
+        let loadProgress = 0;
+        const loadingSteps = [
+            "Inicializando sistema 3D...",
+            "Criando universo...",
+            "Gerando planetas...",
+            "Configurando partículas...",
+            "Carregando texturas...",
+            "Quase pronto..."
+        ];
+
+        function updateLoading(step) {
+            loadProgress = Math.min(100, loadProgress + (100 / loadingSteps.length));
+            loadingProgress.style.width = loadProgress + '%';
+            loadingText.textContent = loadingSteps[step];
+            
+            if (loadProgress >= 100) {
+                setTimeout(() => {
+                    loadingScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                    }, 1000);
+                }, 500);
+            }
+        }
+
+        // Inicializar Three.js
+        function init() {
+            updateLoading(0);
+            
+            // Cena
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x0a0a16, 10, 50);
+            updateLoading(1);
+
+            // Câmera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 15);
+            updateLoading(2);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+            updateLoading(3);
+
+            // Controles
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2;
+            controls.minDistance = 5;
+            controls.maxDistance = 50;
+
+            // Luzes
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0x00eeff, 1);
+            directionalLight.position.set(10, 20, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            const pointLight = new THREE.PointLight(0xff00cc, 2, 50);
+            pointLight.position.set(-10, 10, -10);
+            scene.add(pointLight);
+            updateLoading(4);
+
+            // Raycaster para interação
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Criar cena
+            createScene();
+            updateLoading(5);
+
+            // Event Listeners
+            window.addEventListener('resize', onWindowResize);
+            document.addEventListener('mousedown', onMouseDown);
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+            menuToggle.addEventListener('click', toggleMenu);
+
+            // Iniciar animação
+            animate();
+        }
+
+        function createScene() {
+            // Chão
+            const floorGeometry = new THREE.CircleGeometry(30, 32);
+            const floorMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x151525,
+                metalness: 0.3,
+                roughness: 0.8
+            });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // Criar planeta Roblox
+            planets.roblox = createPlanet({
+                name: 'roblox',
+                position: new THREE.Vector3(-10, 3, 0),
+                color: 0xe3242b,
+                size: 2,
+                icon: 'cube',
+                infoId: 'planetRoblox'
+            });
+
+            // Criar planeta Discord
+            planets.discord = createPlanet({
+                name: 'discord',
+                position: new THREE.Vector3(10, 3, 0),
+                color: 0x5865F2,
+                size: 2,
+                icon: 'robot',
+                infoId: 'planetDiscord'
+            });
+
+            // Criar planeta Luminexo
+            planets.luminexo = createPlanet({
+                name: 'luminexo',
+                position: new THREE.Vector3(0, 3, -10),
+                color: 0x8a2be2,
+                size: 2.5,
+                icon: 'gamepad',
+                infoId: 'planetLuminexo'
+            });
+
+            // Criar nome "asafgamery" em 3D
+            create3DName();
+
+            // Partículas de fundo
+            createParticles();
+
+            // Efeitos especiais
+            createEffects();
+        }
+
+        function createPlanet(config) {
+            const group = new THREE.Group();
+            
+            // Esfera principal
+            const geometry = new THREE.SphereGeometry(config.size, 32, 32);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: config.color,
+                metalness: 0.7,
+                roughness: 0.2,
+                emissive: config.color,
+                emissiveIntensity: 0.2
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            sphere.castShadow = true;
+            group.add(sphere);
+
+            // Anel (para alguns planetas)
+            if (config.icon === 'gamepad') {
+                const ringGeometry = new THREE.RingGeometry(config.size * 1.2, config.size * 1.5, 32);
+                const ringMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0x00eeff,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                ring.rotation.x = Math.PI / 2;
+                group.add(ring);
+            }
+
+            // Ícone flutuante
+            const iconSize = config.size * 0.5;
+            const iconGeometry = new THREE.BoxGeometry(iconSize, iconSize, iconSize);
+            const iconMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const icon = new THREE.Mesh(iconGeometry, iconMaterial);
+            icon.position.y = config.size * 1.5;
+            group.add(icon);
+
+            // Configurar posição e dados
+            group.position.copy(config.position);
+            group.userData = {
+                type: 'planet',
+                name: config.name,
+                infoId: config.infoId,
+                originalY: config.position.y,
+                hoverHeight: 0.5
+            };
+
+            scene.add(group);
+            return group;
+        }
+
+        function create3DName() {
+            // Criar texto "asafgamery" em 3D
+            const textGeometrySettings = {
+                size: 1,
+                height: 0.2,
+                curveSegments: 12,
+                bevelEnabled: true,
+                bevelThickness: 0.03,
+                bevelSize: 0.02,
+                bevelOffset: 0,
+                bevelSegments: 5
+            };
+
+            // Usaremos cubos para simular texto 3D por simplicidade
+            const letters = [];
+            const positions = [
+                { letter: 'A', pos: [-4, 8, -5] },
+                { letter: 'S', pos: [-2.5, 8, -5] },
+                { letter: 'A', pos: [-1, 8, -5] },
+                { letter: 'F', pos: [0.5, 8, -5] },
+                { letter: 'G', pos: [2, 8, -5] },
+                { letter: 'A', pos: [3.5, 8, -5] },
+                { letter: 'M', pos: [5, 8, -5] },
+                { letter: 'E', pos: [6.5, 8, -5] },
+                { letter: 'R', pos: [8, 8, -5] },
+                { letter: 'Y', pos: [9.5, 8, -5] }
+            ];
+
+            positions.forEach((item, index) => {
+                const geometry = new THREE.BoxGeometry(0.8, 1.5, 0.8);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: index % 2 === 0 ? 0x00eeff : 0xff00cc,
+                    shininess: 100,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                
+                const cube = new THREE.Mesh(geometry, material);
+                cube.position.set(item.pos[0], item.pos[1], item.pos[2]);
+                cube.castShadow = true;
+                
+                // Animação de flutuação
+                cube.userData = {
+                    originalY: item.pos[1],
+                    speed: 0.5 + Math.random() * 0.5,
+                    offset: Math.random() * Math.PI * 2
+                };
+                
+                letters.push(cube);
+                scene.add(cube);
+            });
+
+            scene.userData.letters = letters;
+        }
+
+        function createParticles() {
+            const particleCount = 500;
+            const particles = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount; i++) {
+                // Posições aleatórias em uma esfera
+                const radius = 20 + Math.random() * 10;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos((Math.random() * 2) - 1);
+                
+                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                positions[i * 3 + 2] = radius * Math.cos(phi);
+                
+                // Cores aleatórias (azul, rosa, roxo)
+                const colorChoices = [
+                    [0, 0.93, 1],   // Azul neon
+                    [1, 0, 0.8],    // Rosa neon
+                    [0.54, 0.17, 0.89] // Roxo
+                ];
+                const color = colorChoices[Math.floor(Math.random() * colorChoices.length)];
+                
+                colors[i * 3] = color[0];
+                colors[i * 3 + 1] = color[1];
+                colors[i * 3 + 2] = color[2];
+            }
+
+            particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const particleMaterial = new THREE.PointsMaterial({
+                size: 0.1,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6
+            });
+
+            const particleSystem = new THREE.Points(particles, particleMaterial);
+            scene.add(particleSystem);
+            scene.userData.particles = particleSystem;
+        }
+
+        function createEffects() {
+            // Luzes pulsantes
+            const pulsingLights = [];
+            
+            for (let i = 0; i < 3; i++) {
+                const light = new THREE.PointLight(0x00eeff, 2, 15);
+                light.position.set(
+                    (Math.random() - 0.5) * 20,
+                    3 + Math.random() * 5,
+                    (Math.random() - 0.5) * 20
+                );
+                scene.add(light);
+                pulsingLights.push({
+                    light: light,
+                    speed: 0.5 + Math.random(),
+                    intensity: 2
+                });
+            }
+
+            scene.userData.pulsingLights = pulsingLights;
+        }
+
+        // Interação
+        function onMouseDown(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            
+            const intersects = raycaster.intersectObjects(
+                Object.values(planets).map(p => p.children[0])
+            );
+            
+            if (intersects.length > 0) {
+                const planet = intersects[0].object.parent;
+                showPlanetInfo(planet.userData.infoId);
+                
+                // Efeito visual
+                planet.scale.setScalar(1.2);
+                setTimeout(() => {
+                    planet.scale.setScalar(1);
+                }, 200);
+            }
+        }
+
+        function showPlanetInfo(infoId) {
+            // Esconder todas as infos primeiro
+            document.querySelectorAll('.planet-info').forEach(el => {
+                el.classList.remove('show');
+            });
+            
+            // Mostrar a info do planeta clicado
+            const infoElement = document.getElementById(infoId);
+            if (infoElement) {
+                infoElement.classList.add('show');
+                
+                // Auto-esconder depois de 5 segundos
+                setTimeout(() => {
+                    infoElement.classList.remove('show');
+                }, 5000);
+            }
+        }
+
+        // Controles de teclado
+        function onKeyDown(event) {
+            keys[event.key.toLowerCase()] = true;
+            
+            if (event.key === 'r' || event.key === 'R') {
+                // Resetar câmera
+                camera.position.set(0, 5, 15);
+                controls.target.set(0, 0, 0);
+            }
+            
+            if (event.key === 'm' || event.key === 'M') {
+                toggleMenu();
+            }
+        }
+
+        function onKeyUp(event) {
+            keys[event.key.toLowerCase()] = false;
+        }
+
+        // Movimento da câmera com teclado
+        function updateCameraPosition() {
+            if (keys['w'] || keys['arrowup']) {
+                camera.position.z -= cameraSpeed;
+                controls.target.z -= cameraSpeed;
+            }
+            if (keys['s'] || keys['arrowdown']) {
+                camera.position.z += cameraSpeed;
+                controls.target.z += cameraSpeed;
+            }
+            if (keys['a'] || keys['arrowleft']) {
+                camera.position.x -= cameraSpeed;
+                controls.target.x -= cameraSpeed;
+            }
+            if (keys['d'] || keys['arrowright']) {
+                camera.position.x += cameraSpeed;
+                controls.target.x += cameraSpeed;
+            }
+            if (keys[' ']) { // Espaço
+                camera.position.y += cameraSpeed;
+                controls.target.y += cameraSpeed;
+            }
+            if (keys['shift']) {
+                camera.position.y -= cameraSpeed;
+                controls.target.y -= cameraSpeed;
+            }
+        }
+
+        // Animação
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Atualizar controles
+            controls.update();
+            updateCameraPosition();
+            
+            // Animar planetas
+            Object.values(planets).forEach(planet => {
+                // Rotação
+                planet.rotation.y += 0.005;
+                
+                // Flutuação
+                const time = Date.now() * 0.001;
+                planet.position.y = planet.userData.originalY + 
+                    Math.sin(time + planet.userData.originalY) * planet.userData.hoverHeight;
+            });
+            
+            // Animar letras do nome
+            if (scene.userData.letters) {
+                const time = Date.now() * 0.001;
+                scene.userData.letters.forEach((letter, index) => {
+                    letter.position.y = letter.userData.originalY + 
+                        Math.sin(time * letter.userData.speed + letter.userData.offset) * 0.5;
+                    letter.rotation.y = time * 0.5 + index * 0.1;
+                });
+            }
+            
+            // Animar partículas
+            if (scene.userData.particles) {
+                scene.userData.particles.rotation.y += 0.001;
+            }
+            
+            // Animar luzes pulsantes
+            if (scene.userData.pulsingLights) {
+                const time = Date.now() * 0.001;
+                scene.userData.pulsingLights.forEach(lightData => {
+                    lightData.light.intensity = 1 + Math.sin(time * lightData.speed) * lightData.intensity;
+                });
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // Funções da UI
+        function toggleMenu() {
+            sideMenu.classList.toggle('open');
+            menuToggle.innerHTML = sideMenu.classList.contains('open') ? 
+                '<i class="fas fa-times menu-icon"></i>' : 
+                '<i class="fas fa-bars menu-icon"></i>';
+        }
+
+        function flyToPlanet(planetName) {
+            const planet = planets[planetName];
+            if (planet) {
+                // Mover câmera para o planeta
+                const targetPosition = planet.position.clone();
+                targetPosition.z += 5;
+                targetPosition.y += 3;
+                
+                // Animação suave
+                new TWEEN.Tween(camera.position)
+                    .to(targetPosition, 1000)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .start();
+                
+                // Mostrar info
+                showPlanetInfo(planet.userData.infoId);
+            }
+        }
+
+        function showStudioInfo() {
+            showPlanetInfo('planetLuminexo');
+            flyToPlanet('luminexo');
+        }
+
+        // Utilitários
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Iniciar quando a página carregar
+        window.addEventListener('load', init);
+
+        // TWEEN para animações suaves
+        const TWEEN = {
+            Easing: {
+                Quadratic: {
+                    InOut: function(k) {
+                        if ((k *= 2) < 1) return 0.5 * k * k;
+                        return -0.5 * (--k * (k - 2) - 1);
+                    }
+                }
+            },
+            Tween: function(start) {
+                this.start = start;
+                this.to = function(target, duration) {
+                    this.target = target;
+                    this.duration = duration;
+                    this.startTime = Date.now();
+                    return this;
+                };
+                this.easing = function(easing) {
+                    this.easingFunc = easing;
+                    return this;
+                };
+                this.start = function() {
+                    const self = this;
+                    function update() {
+                        const now = Date.now();
+                        const elapsed = now - self.startTime;
+                        const progress = Math.min(elapsed / self.duration, 1);
+                        
+                        if (progress < 1) {
+                            const easedProgress = self.easingFunc ? self.easingFunc(progress) : progress;
+                            
+                            // Interpolar cada propriedade
+                            for (const prop in self.target) {
+                                if (self.target.hasOwnProperty(prop)) {
+                                    camera.position[prop] = self.start[prop] + 
+                                        (self.target[prop] - self.start[prop]) * easedProgress;
+                                }
+                            }
+                            
+                            requestAnimationFrame(update);
+                        }
+                    }
+                    update();
+                };
+            }
+        };
+    </script>
+</body>
+</html>
